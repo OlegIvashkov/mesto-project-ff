@@ -8,16 +8,16 @@ let cardSource = '';
 function createCard(cardName, cardSource, deleteCard) {
   const cardElement = cardTemplate.querySelector('.card').cloneNode(true);
   cardElement.querySelector('.card__title').textContent = cardName;
-  cardElement.querySelector('.card__image').src = cardSource; 
+  const cardImage = cardElement.querySelector('.card__image');
+  cardImage.src = cardSource;
+  cardImage.alt = cardName; 
   const deleteButton = cardElement.querySelector('.card__delete-button');
-  deleteButton.addEventListener('click', deleteCard);
+  deleteButton.addEventListener("click", () => deleteCard(cardElement));
   return cardElement; 
 }
 // @todo: Функция удаления карточки
-function deleteCard(event) {
-  const deleteButton = event.target;
-  const listItem = deleteButton.closest('.card');
-  listItem.remove(); 
+function deleteCard(cardElement) {
+  cardElement.remove()
 }
 // @todo: Вывести карточки на страницу
 initialCards.forEach(function (item) {
