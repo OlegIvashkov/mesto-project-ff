@@ -1,16 +1,4 @@
-import { 
-  placesList,
-  profileForm,
-  addCardForm,
-  allPopups
-} from './index.js';
-
-import { 
-  createCard,
-  deleteCard,
-  likeCard,
-} from './card.js';
-
+const allPopups = document.querySelectorAll('.popup');
 //Обработчик для закрытия модального окна при нажатии Esc.
 function handleEscape(event) {
   if (event.key == 'Escape') {
@@ -48,6 +36,7 @@ function closePopup() {
 };
 
 export {  
+  allPopups,
   openPopup, 
-  closePopup,
+  closePopup
 };

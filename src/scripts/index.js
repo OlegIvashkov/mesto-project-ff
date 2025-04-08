@@ -2,27 +2,27 @@ import '../pages/index.css';
 import { initialCards } from './cards.js';
 import {  
   openPopup, 
-  closePopup
+  closePopup,
+  allPopups
 } from './modal.js';
 import { 
+  cardTemplate,
+  popupImage,
+  addImageToPopup,
   createCard,
   deleteCard,
-  likeCard,
+  likeCard
 } from './card.js';
-//Темплейт карточки
-const cardTemplate = document.querySelector('#card-template').content;
 
 //DOM узлы.
 const placesList = document.querySelector('.places__list');
 const profileEditButton = document.querySelector('.profile__edit-button');
 const profileAddCardButton = document.querySelector('.profile__add-button');
 const popupEdit = document.querySelector('.popup_type_edit');
-const popupImage = document.querySelector('.popup_type_image');
 const popupAddCard = document.querySelector('.popup_type_new-card');
 const closePopupButtonList = document.querySelectorAll('.popup__close');
 const profileForm = document.forms['edit-profile'];
 const addCardForm = document.forms['new-place'];
-const allPopups = document.querySelectorAll('.popup');
 const nameProfileNode = document.querySelector('.profile__title');
 const descriptionProfileNode = document.querySelector('.profile__description');
 
@@ -71,13 +71,6 @@ function addCard(event) {
   closePopup();
 };
 
-//Эту функцию передаём как обработчик открытия окна с картинкой, чтобы вставить ссылку на картинку.
-function addImageToPopup(popup) {
-  popup.querySelector('.popup__image').src = event.target.src;
-  popup.querySelector('.popup__image').alt = event.target.alt;
-  popup.querySelector('.popup__caption').innerText = event.target.alt;  
-};
-
 //Вывести карточки на страницу
 initialCards.forEach(function (item) {
   cardName = item.name;
@@ -103,21 +96,3 @@ profileForm.addEventListener('submit', changeProfileInfo);
 
 //Добавляем обработчик addCard форме добавляения карточки на страницу.
 addCardForm.addEventListener('submit', addCard);
-
-export { 
-  cardTemplate,
-  placesList,
-  profileEditButton,
-  profileAddCardButton,
-  popupEdit, 
-  popupImage,
-  popupAddCard,
-  closePopupButtonList,
-  profileForm,
-  addCardForm, 
-  cardName,
-  cardSource,
-  cardElement,
-  allPopups,
-  addImageToPopup
-}; 

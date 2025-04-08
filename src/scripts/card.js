@@ -1,8 +1,13 @@
-import { 
-  cardTemplate,
-  popupImage,
-  addImageToPopup
-} from './index.js';
+//Темплейт карточки и необходимые узлы.
+const cardTemplate = document.querySelector('#card-template').content;
+const popupImage = document.querySelector('.popup_type_image');
+
+//Эту функцию передаём как обработчик открытия окна с картинкой, чтобы вставить ссылку на картинку.
+function addImageToPopup(popup) {
+  popup.querySelector('.popup__image').src = event.target.src;
+  popup.querySelector('.popup__image').alt = event.target.alt;
+  popup.querySelector('.popup__caption').innerText = event.target.alt;  
+};
 
 //Функция создания карточки
 function createCard(cardName, cardSource, deleteCard, likeCard, openPopup) {
@@ -31,7 +36,10 @@ function likeCard(event) {
 };
 
 export { 
+  cardTemplate,
+  popupImage,
+  addImageToPopup,
   createCard,
   deleteCard,
   likeCard
-}
+};
