@@ -8,7 +8,7 @@ function handleEscape(event) {
 
 //Обработчик для закрытия модального окна при нажатии на оверлей.
 function handleOverlayClose(event) {
-  if (document.querySelector('.popup_is-opened') && event.target.classList.contains('popup_is-opened')) {
+  if (event.target.classList.contains("popup_is-opened")) {
     closePopup();
   };
 };

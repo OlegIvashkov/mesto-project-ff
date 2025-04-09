@@ -2,13 +2,10 @@ import '../pages/index.css';
 import { initialCards } from './cards.js';
 import {  
   openPopup, 
-  closePopup,
-  allPopups
+  closePopup
 } from './modal.js';
 import { 
-  cardTemplate,
   popupImage,
-  addImageToPopup,
   createCard,
   deleteCard,
   likeCard
@@ -25,6 +22,10 @@ const profileForm = document.forms['edit-profile'];
 const addCardForm = document.forms['new-place'];
 const nameProfileNode = document.querySelector('.profile__title');
 const descriptionProfileNode = document.querySelector('.profile__description');
+const popupImageElement = popupImage.querySelector('.popup__image');
+const popupImageCaption = popupImage.querySelector('.popup__caption');
+const popupEditInputName = popupEdit.querySelector('.popup__input_type_name');
+const popupEditInputDescription = popupEdit.querySelector('.popup__input_type_description');
 
 //Глобальные переменные.
 let cardName = '';
@@ -33,9 +34,9 @@ let cardElement;
 let nameProfile = nameProfileNode.textContent; 
 let descriptionProfile = descriptionProfileNode.textContent;
 
-function editProfile(popup) {
-  popup.querySelector('.popup__input_type_name').placeholder = nameProfile;
-  popup.querySelector('.popup__input_type_description').placeholder = descriptionProfile;
+function editProfile(popupEdit) {
+  popupEditInputName.value = nameProfile;
+  popupEditInputDescription.value = descriptionProfile;
 };
 
 function changeProfileInfo(event) {
@@ -57,6 +58,18 @@ function changeProfileInfo(event) {
   closePopup();
 };
 
+//Эту функцию передаём как обработчик открытия окна с картинкой, чтобы вставить ссылку на картинку.
+function addImageToPopup(popupImage, event) {
+  popupImageElement.src = event.target.src;
+  popupImageElement.alt = event.target.alt;
+  popupImageCaption.textContent = event.target.alt;  
+};
+
+function handleImageClick(popupImage, event) {
+  openPopup(popupImage);
+  addImageToPopup(popupImage, event);
+};
+
 //Функция добавления карточки.
 function addCard(event) {
   event.preventDefault();
@@ -64,7 +77,7 @@ function addCard(event) {
   const inputCardName = addCardForm.elements['place-name'].value;
   const inputCardUrl = addCardForm.elements.link.value;
   //Создаём карточку.
-  const newCard = createCard(inputCardName, inputCardUrl, deleteCard, likeCard, openPopup);
+  const newCard = createCard(inputCardName, inputCardUrl, deleteCard, likeCard, handleImageClick);
   //Добавляем карточку на страницу.
   placesList.insertBefore(newCard, placesList.children[0]);
   addCardForm.reset();
@@ -75,16 +88,16 @@ function addCard(event) {
 initialCards.forEach(function (item) {
   cardName = item.name;
   cardSource = item.link;
-  cardElement = createCard(cardName, cardSource, deleteCard, likeCard, openPopup);
+  cardElement = createCard(cardName, cardSource, deleteCard, likeCard, handleImageClick);
   placesList.append(cardElement);
 });
 
 //Добавляем слушатели открытия окна соответствующим кнопкам.
-profileEditButton.addEventListener('click', () => openPopup(popupEdit));
+profileEditButton.addEventListener("click", () => {
+  editProfile(popupEdit);
+  openPopup(popupEdit);
+});
 profileAddCardButton.addEventListener('click', () => openPopup(popupAddCard));
-//При открытии окна редактирвоания профиля, вставляем плейсхолдеры.
-profileEditButton.addEventListener('click', () => editProfile(popupEdit));
-
 
 //Добавляем всем кнопкам, закрывающим окна, соответствуюший обработчик.
 closePopupButtonList.forEach(button => {
