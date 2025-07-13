@@ -1,5 +1,4 @@
 import '../pages/index.css';
-import { initialCards } from './cards.js';
 import {  
   openPopup, 
   closePopup
@@ -7,9 +6,22 @@ import {
 import { 
   popupImage,
   createCard,
-  deleteCard,
-  likeCard
+  likeCard,
+  popupConfirmCardDelete
 } from './card.js';
+import {
+  validationConfig,
+  hideInputError,
+  enableValidation
+} from './validation.js';
+import {
+  getUserData,
+  getCardsData,
+  changeProfileInfoAPI,
+  sendCardToServer,
+  confirmDeleteCard,
+  sendAvatarToServer,
+} from './api.js';
 
 //DOM узлы.
 const placesList = document.querySelector('.places__list');
@@ -20,42 +32,96 @@ const popupAddCard = document.querySelector('.popup_type_new-card');
 const closePopupButtonList = document.querySelectorAll('.popup__close');
 const profileForm = document.forms['edit-profile'];
 const addCardForm = document.forms['new-place'];
+const avatarForm = document.forms['new-avatar'];
 const nameProfileNode = document.querySelector('.profile__title');
 const descriptionProfileNode = document.querySelector('.profile__description');
+const profileImageElement = document.querySelector('.profile__image');
 const popupImageElement = popupImage.querySelector('.popup__image');
 const popupImageCaption = popupImage.querySelector('.popup__caption');
 const popupEditInputName = popupEdit.querySelector('.popup__input_type_name');
 const popupEditInputDescription = popupEdit.querySelector('.popup__input_type_description');
+const confirmCardDeleteButton = document.querySelector('.popup__button-confirm');
+const editProfileImg = document.querySelector('.profile__image');
+const popupEditProfileImg = document.querySelector('.popup_type_edit-profile-img');
+const editProfileImgButton = document.querySelector('.popup__button-edit-profile-img');
+const editProfileButton = document.querySelector('.popup__button-edit-profile');
+const cardSaveButton = document.querySelector('.popup__button-save-card'); 
 
 //Глобальные переменные.
 let cardName = '';
 let cardSource = ''; 
+let cardOwnerId = '';
+let cardId = '';
+let cardLikes = document.querySelector('.card__likes');//Элемент, в котором отображается количество лайков. */
+let cardLikesNumber = 0;//Сколько у карточки лайков.
+let likeStatus = null;//Лайкнута ли карточка пользователем, чтобы правильно отображать лайк
 let cardElement;
-let nameProfile = nameProfileNode.textContent; 
-let descriptionProfile = descriptionProfileNode.textContent;
+let nameProfile = ''; 
+let descriptionProfile = '';
 
-function editProfile(popupEdit) {
-  popupEditInputName.value = nameProfile;
-  popupEditInputDescription.value = descriptionProfile;
+const clearValidation = (formElement, validationConfig) => {
+  const inputList = Array.from(formElement.querySelectorAll(validationConfig.inputSelector));
+  const buttonElement = formElement.querySelector(validationConfig.submitButtonSelector);
+
+  inputList.forEach((inputElement) => {
+    hideInputError(formElement, inputElement);
+  });
+
+  buttonElement.disabled = true;
+  buttonElement.classList.add(validationConfig.inactiveButtonClass);
 };
+
+//Получаем с сервера данные и отрисовываем информацию о пользователе и карточки
+Promise.all([getUserData(), getCardsData()])
+  .then(([user, initialCards]) => {
+    nameProfileNode.textContent = user.name;
+    nameProfile = user.name;
+    descriptionProfileNode.textContent = user.about;
+    descriptionProfile = user.about;
+    profileImageElement.style.backgroundImage = `url('${user.avatar}')`;
+    initialCards.forEach(function (item) {
+      cardName = item.name;
+      cardSource = item.link;
+      cardOwnerId = item.owner['_id'];
+      cardId = item['_id'];
+      cardLikesNumber = item.likes.length;
+      const whoLiked = item.likes.map(obj => obj['_id']); //Составляем массив лайкнувших.
+      if (whoLiked.includes('527f83e877f756bf47de8ed5')) {
+        likeStatus = true;
+      } else {
+        likeStatus = false;
+      }; //Если мной лайкнута карточка, то сохранили это в отдельном свойстве, используем для правильного отображения сердечка.
+      cardElement = createCard(cardName, cardSource, cardOwnerId, cardId, cardLikesNumber, likeStatus, likeCard, handleImageClick);
+      placesList.append(cardElement);
+    });
+  })
+  .catch((err) => {
+    console.log('Ошибка', err);
+  });
 
 function changeProfileInfo(event) {
   event.preventDefault();
+  editProfileButton.textContent = 'Сохранение...';
   const inputName = profileForm.elements.name.value;
   const inputDescription = profileForm.elements.description.value;
-  if (inputName === '') {
-    nameProfileNode.textContent = nameProfile;
-  } else {
-    nameProfileNode.textContent = inputName;
-    nameProfile = inputName; // Обновляем значение переменной при изменении
-  };
-  if (inputDescription === '') {
-    descriptionProfileNode.textContent = descriptionProfile;
-  } else {
-    descriptionProfileNode.textContent = inputDescription;
-    descriptionProfile = inputDescription; // Обновляем значение переменной при изменении
-  };
-  closePopup();
+  changeProfileInfoAPI(inputName, inputDescription)
+    .then((result) => {
+        nameProfileNode.textContent = result.name;
+        nameProfile = result.name;
+        descriptionProfileNode.textContent = result.about;
+        descriptionProfile = result.about; // Обновляем значение переменной при изменении
+        closePopup();
+        editProfileButton.textContent = 'Сохранить';
+      })
+    .catch((err) => {
+      console.log('Ошибка', err)
+    });
+}; 
+
+function editProfile(popupEdit) {
+  clearValidation(profileForm, validationConfig);
+  popupEditInputName.value = nameProfile;
+  popupEditInputDescription.value = descriptionProfile;
 };
 
 //Эту функцию передаём как обработчик открытия окна с картинкой, чтобы вставить ссылку на картинку.
@@ -73,25 +139,34 @@ function handleImageClick(popupImage, event) {
 //Функция добавления карточки.
 function addCard(event) {
   event.preventDefault();
+  cardSaveButton.textContent = 'Сохранение...';
   //Выбираем введённые данные - название карточки  и ссылку.
   const inputCardName = addCardForm.elements['place-name'].value;
   const inputCardUrl = addCardForm.elements.link.value;
-  //Создаём карточку.
-  const newCard = createCard(inputCardName, inputCardUrl, deleteCard, likeCard, handleImageClick);
-  //Добавляем карточку на страницу.
-  placesList.insertBefore(newCard, placesList.children[0]);
-  addCardForm.reset();
-  closePopup();
+  //Отправляем данные о карточке на сервер.
+  sendCardToServer(inputCardName, inputCardUrl)
+  .then((result) => {    
+    //Создаём карточку.
+    const newCard = createCard(result.name, 
+      result.link, 
+      result.owner['_id'], 
+      result['_id'], 
+      result.likes.length, 
+      false,  
+      likeCard, 
+      handleImageClick);
+    //Добавляем карточку на страницу.
+    placesList.insertBefore(newCard, placesList.children[0]);
+    addCardForm.reset();
+    clearValidation(profileForm, validationConfig);
+    closePopup(); 
+    cardSaveButton.textContent = 'Сохранить';
+  })
+  .catch((err) => {
+    console.log('Ошибка', err)
+  });
 };
-
-//Вывести карточки на страницу
-initialCards.forEach(function (item) {
-  cardName = item.name;
-  cardSource = item.link;
-  cardElement = createCard(cardName, cardSource, deleteCard, likeCard, handleImageClick);
-  placesList.append(cardElement);
-});
-
+  
 //Добавляем слушатели открытия окна соответствующим кнопкам.
 profileEditButton.addEventListener("click", () => {
   editProfile(popupEdit);
@@ -109,3 +184,45 @@ profileForm.addEventListener('submit', changeProfileInfo);
 
 //Добавляем обработчик addCard форме добавляения карточки на страницу.
 addCardForm.addEventListener('submit', addCard);
+
+//Добавляем обработчик кнопке подтверждения удаления карточки.
+confirmCardDeleteButton.addEventListener('click', () => {
+  if (popupConfirmCardDelete.cardToDelete) { 
+    confirmCardDeleteButton.textContent = 'Удаление...';   
+    const cardId = popupConfirmCardDelete.cardToDelete.Id; // Получаем ID карточки       
+    confirmDeleteCard(cardId)
+      .then(() => {
+        popupConfirmCardDelete.cardToDelete.remove(); // Удаляем карточку из DOM
+        popupConfirmCardDelete.cardToDelete = null; // Очищаем ссылку на карточку 
+        popupConfirmCardDelete.classList.toggle('popup_is-opened'); // Закрываем попап
+        confirmCardDeleteButton.textContent = 'Да';
+      })
+      .catch((err) => {
+        console.log('Ошибка', err);
+      })
+  };
+});
+
+//Добавляем слушатель клика для смены изображения профиля
+editProfileImg.addEventListener('click', () => openPopup(popupEditProfileImg)); //Только здесь другой попап нужно будет указать.
+
+//Добавляем обработчик для кнопки редактирования изображения профиля
+editProfileImgButton.addEventListener('click', (event) => {
+  event.preventDefault();
+  editProfileImgButton.textContent = 'Сохранение...';
+  const avatarUrl = avatarForm.elements['link'].value;
+  sendAvatarToServer(avatarUrl)
+    .then((result) => {
+      profileImageElement.style.backgroundImage = `url('${result.avatar}')`;
+    })
+    .then(() => {
+      closePopup();
+      editProfileImgButton.textContent = 'Сохранить';
+    })  
+    .catch((err) => {
+      console.log(err);
+    })
+});
+
+//Запускаем валидацию.
+enableValidation(validationConfig); 

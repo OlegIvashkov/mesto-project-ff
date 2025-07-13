@@ -8,13 +8,13 @@
   background-size: cover;
   background-position: center;
   margin: 0 29px 0 0;
+  position: relative; /* Добавляем, чтобы оверлей спозиционировать. */
 }
- /* C:/Users/Oleg Ivashkov/dev/mesto-project-ff/src/images/avatar.jpg 
- C:/Users/Oleg Ivashkov/dev/mesto-project-ff/src/blocks/profile/__image/profile__image.css 
 
- dev/mesto-project-ff/src/images/avatar.jpg 
- dev/mesto-project-ff/src/../../../profile__image.css  */
-/* src/blocks/profile/__image/profile__image.css */
+.profile__image:hover .profile__overlay {
+  visibility: visible;
+}
+
 @media screen and (max-width: 740px) {
   .profile__image {
     margin: 0 10px 0 0;

@@ -1,4 +1,6 @@
 @import url('./__content/popup__content.css');
+@import url('./__content/popup__content_confirm.css');
+@import url('./__content/popup__content_edit-profile-img.css');
 @import url('./__content/_content/popup__content_content_image.css');
 @import url('./__close/popup__close.css');
 @import url('./__title/popup__title.css');
@@ -7,6 +9,8 @@
 @import url('./__button/popup__button.css');
 @import url('./__caption/popup__caption.css');
 @import url('./__image/popup__image.css');
+@import url('./__input-error/popup__input_type_error.css');
+@import url('./__input-error/popup__input-error_active.css');
 
 .popup {
   font-family: 'Inter', Arial, sans-serif;
@@ -25,35 +29,3 @@
   transition: visibility 0s, opacity 0.6s;
 }
 
-/* Есть модальное окно, которое отображается на странице принажатии на соответствующую кнопку. 
-.popup {
-  font-family: 'Inter', Arial, sans-serif;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(0, 0, 0, .5);
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  z-index: 10;
-  visibility: hidden;
-  transition: visibility 0s, opacity 5s;
-}
-Хочу при нажатии на кнопку добавлять окну .popup следующий класс: 
-.popup_is-opened {
-  display: flex;
-  visibility: visible;
-  opacity: 1;
-  pointer-events: all;
-}
-Этот класс нужен, чтобы при нажатии окно появлялось плавно. Вот обработчик клика: 
-function popupOpen (popup) {
-  popup.classList.toggle('popup_is-opened');
-}; 
-Параметр этого обработчика дополнительно определяется в коде: 
-const popupEdit = document.querySelector('.popup_type_edit');
-Сейчас плавного открытия окна не происходит. Окно появляется мгновенно. В инструментах разарботчика 
-видно, что класс popup_is-opened окну добавляется. Видно, что у окна есть все стили, которые мы добавляем
-присвоением классов popup и popup_is-opened. Как исправить код? */
