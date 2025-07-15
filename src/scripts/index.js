@@ -173,6 +173,8 @@ profileEditButton.addEventListener("click", () => {
   openPopup(popupEdit);
 });
 profileAddCardButton.addEventListener('click', () => openPopup(popupAddCard));
+//Добавляем слушатель клика для смены изображения профиля.
+editProfileImg.addEventListener('click', () => openPopup(popupEditProfileImg));
 
 //Добавляем всем кнопкам, закрывающим окна, соответствуюший обработчик.
 closePopupButtonList.forEach(button => {
@@ -204,7 +206,7 @@ confirmCardDeleteButton.addEventListener('click', () => {
 });
 
 //Добавляем слушатель клика для смены изображения профиля
-editProfileImg.addEventListener('click', () => openPopup(popupEditProfileImg)); //Только здесь другой попап нужно будет указать.
+editProfileImg.addEventListener('click', () => openPopup(popupEditProfileImg)); 
 
 //Добавляем обработчик для кнопки редактирования изображения профиля
 editProfileImgButton.addEventListener('click', (event) => {

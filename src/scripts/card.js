@@ -2,6 +2,10 @@ import {
   addLike,
   deleteLike
 } from './api.js';
+import {  
+  openPopup, 
+  closePopup
+} from './modal.js';
 
 //Темплейт карточки и необходимые узлы.
 const cardTemplate = document.querySelector('#card-template').content;
@@ -22,7 +26,7 @@ function createCard(cardName, cardSource, cardOwnerId, cardId, cardLikesNumber, 
   const deleteButton = cardElement.querySelector('.card__delete-button');
   if (cardOwnerId === '527f83e877f756bf47de8ed5') {    
     deleteButton.addEventListener('click', () => {
-      popupConfirmCardDelete.classList.toggle('popup_is-opened');
+      openPopup(popupConfirmCardDelete);
       popupConfirmCardDelete.cardToDelete = cardElement;
     }); 
   } else {
