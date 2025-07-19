@@ -19,7 +19,7 @@ function openPopup (popup) {
   //Реализуем возможность закрытия модального окна при нажатии на оверлей.
   window.addEventListener('mousedown', handleOverlayClose);
   //Показываем окно.
-  popup.classList.toggle('popup_is-opened');
+  popup.classList.add('popup_is-opened');
 };
 
 function closePopup() {
@@ -29,7 +29,7 @@ function closePopup() {
       currentPopup = allPopups[i]; 
     };
   };
-  currentPopup.classList.toggle('popup_is-opened');
+  currentPopup.classList.remove('popup_is-opened');
   //Удаляем слушатель для закрытия при нажатии Esc или нажатии на оверлей;
   window.removeEventListener('keydown', handleEscape);
   window.removeEventListener('mousedown', handleOverlayClose);

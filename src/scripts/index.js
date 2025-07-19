@@ -4,14 +4,10 @@ import {
   closePopup
 } from './modal.js';
 import { 
-  popupImage,
-  createCard,
-  likeCard,
-  popupConfirmCardDelete
+  createCard
 } from './card.js';
 import {
-  validationConfig,
-  hideInputError,
+  clearValidation,
   enableValidation
 } from './validation.js';
 import {
@@ -21,8 +17,18 @@ import {
   sendCardToServer,
   confirmDeleteCard,
   sendAvatarToServer,
+  addLike,
+  deleteLike
 } from './api.js';
 
+const validationConfig = {
+  formSelector: '.popup__form',
+  inputSelector: '.popup__input',
+  submitButtonSelector: '.popup__button',
+  inactiveButtonClass: 'popup__button_disabled',
+  inputErrorClass: 'popup__input_type_error',
+  errorClass: 'popup__input-error_active'
+};
 //DOM узлы.
 const placesList = document.querySelector('.places__list');
 const profileEditButton = document.querySelector('.profile__edit-button');
@@ -36,6 +42,7 @@ const avatarForm = document.forms['new-avatar'];
 const nameProfileNode = document.querySelector('.profile__title');
 const descriptionProfileNode = document.querySelector('.profile__description');
 const profileImageElement = document.querySelector('.profile__image');
+const popupImage = document.querySelector('.popup_type_image');
 const popupImageElement = popupImage.querySelector('.popup__image');
 const popupImageCaption = popupImage.querySelector('.popup__caption');
 const popupEditInputName = popupEdit.querySelector('.popup__input_type_name');
@@ -46,6 +53,7 @@ const popupEditProfileImg = document.querySelector('.popup_type_edit-profile-img
 const editProfileImgButton = document.querySelector('.popup__button-edit-profile-img');
 const editProfileButton = document.querySelector('.popup__button-edit-profile');
 const cardSaveButton = document.querySelector('.popup__button-save-card'); 
+const popupConfirmCardDelete = document.querySelector('.popup_type_confirm');
 
 //Глобальные переменные.
 let cardName = '';
@@ -58,18 +66,7 @@ let likeStatus = null;//Лайкнута ли карточка пользова�
 let cardElement;
 let nameProfile = ''; 
 let descriptionProfile = '';
-
-const clearValidation = (formElement, validationConfig) => {
-  const inputList = Array.from(formElement.querySelectorAll(validationConfig.inputSelector));
-  const buttonElement = formElement.querySelector(validationConfig.submitButtonSelector);
-
-  inputList.forEach((inputElement) => {
-    hideInputError(formElement, inputElement);
-  });
-
-  buttonElement.disabled = true;
-  buttonElement.classList.add(validationConfig.inactiveButtonClass);
-};
+let currentUserId = '';//Мой id, чтобы добавлять кнопки удаления только на мои карточки
 
 //Получаем с сервера данные и отрисовываем информацию о пользователе и карточки
 Promise.all([getUserData(), getCardsData()])
@@ -79,6 +76,7 @@ Promise.all([getUserData(), getCardsData()])
     descriptionProfileNode.textContent = user.about;
     descriptionProfile = user.about;
     profileImageElement.style.backgroundImage = `url('${user.avatar}')`;
+    currentUserId = user['_id'];
     initialCards.forEach(function (item) {
       cardName = item.name;
       cardSource = item.link;
@@ -86,12 +84,12 @@ Promise.all([getUserData(), getCardsData()])
       cardId = item['_id'];
       cardLikesNumber = item.likes.length;
       const whoLiked = item.likes.map(obj => obj['_id']); //Составляем массив лайкнувших.
-      if (whoLiked.includes('527f83e877f756bf47de8ed5')) {
+      if (whoLiked.includes(currentUserId)) {
         likeStatus = true;
       } else {
         likeStatus = false;
       }; //Если мной лайкнута карточка, то сохранили это в отдельном свойстве, используем для правильного отображения сердечка.
-      cardElement = createCard(cardName, cardSource, cardOwnerId, cardId, cardLikesNumber, likeStatus, likeCard, handleImageClick);
+      cardElement = createCard(cardName, cardSource, cardOwnerId, cardId, cardLikesNumber, likeStatus, likeCard, handleImageClick, openPopup, confirmCardDelete, currentUserId, popupConfirmCardDelete);
       placesList.append(cardElement);
     });
   })
@@ -110,11 +108,13 @@ function changeProfileInfo(event) {
         nameProfile = result.name;
         descriptionProfileNode.textContent = result.about;
         descriptionProfile = result.about; // Обновляем значение переменной при изменении
-        closePopup();
-        editProfileButton.textContent = 'Сохранить';
-      })
+        closePopup();        
+    })
     .catch((err) => {
       console.log('Ошибка', err)
+    })
+    .finally(() => {
+    editProfileButton.textContent = 'Сохранить';
     });
 }; 
 
@@ -125,15 +125,37 @@ function editProfile(popupEdit) {
 };
 
 //Эту функцию передаём как обработчик открытия окна с картинкой, чтобы вставить ссылку на картинку.
-function addImageToPopup(popupImage, event) {
+function addImageToPopup(event) {
   popupImageElement.src = event.target.src;
   popupImageElement.alt = event.target.alt;
-  popupImageCaption.textContent = event.target.alt;  
+  popupImageCaption.textContent = event.target.alt;
 };
 
-function handleImageClick(popupImage, event) {
+function handleImageClick(event) {
   openPopup(popupImage);
-  addImageToPopup(popupImage, event);
+  addImageToPopup(event);
+};
+
+//Создаём функцию лайка карточки.
+function likeCard(event) {  
+  if (!event.target.classList.value.includes('card__like-button_is-active')) {
+    addLike(event.target.cardId)
+      .then((result) => {
+        event.target.classList.toggle('card__like-button_is-active');
+        event.target.cardLikes.textContent = result.likes.length;})//С сервера взяли количество лайков и сразу его вписали на страницу.
+        .catch((err) => {
+          console.log('Ошибка', err)
+        });
+  } else {
+    deleteLike(event.target.cardId)
+      .then((result) => {
+        event.target.classList.toggle('card__like-button_is-active')
+        event.target.cardLikes.textContent = result.likes.length;//С сервера взяли количество лайков и сразу его вписали на страницу.
+      })
+      .catch((err) => {
+        console.log('Ошибка', err)
+      });  
+  }  
 };
 
 //Функция добавления карточки.
@@ -154,11 +176,15 @@ function addCard(event) {
       result.likes.length, 
       false,  
       likeCard, 
-      handleImageClick);
+      handleImageClick, 
+      openPopup,
+      confirmCardDelete,
+      currentUserId,
+      popupConfirmCardDelete);
     //Добавляем карточку на страницу.
     placesList.insertBefore(newCard, placesList.children[0]);
     addCardForm.reset();
-    clearValidation(profileForm, validationConfig);
+    clearValidation(addCardForm, validationConfig);
     closePopup(); 
     cardSaveButton.textContent = 'Сохранить';
   })
@@ -181,6 +207,12 @@ closePopupButtonList.forEach(button => {
   button.addEventListener('click', () => closePopup());
 });
 
+//Обработчик клика по кнопке удаления карточки
+const confirmCardDelete = (popupConfirmCardDelete) => {
+  openPopup(popupConfirmCardDelete);
+  popupConfirmCardDelete.cardToDelete = cardElement;  
+};
+
 //Добавляем форме слушатель события submit.
 profileForm.addEventListener('submit', changeProfileInfo);
 
@@ -196,17 +228,17 @@ confirmCardDeleteButton.addEventListener('click', () => {
       .then(() => {
         popupConfirmCardDelete.cardToDelete.remove(); // Удаляем карточку из DOM
         popupConfirmCardDelete.cardToDelete = null; // Очищаем ссылку на карточку 
-        popupConfirmCardDelete.classList.toggle('popup_is-opened'); // Закрываем попап
+        closePopup();
         confirmCardDeleteButton.textContent = 'Да';
       })
       .catch((err) => {
-        console.log('Ошибка', err);
+        console.log('Ошибка', err);        
       })
+      .finally(() => {
+        confirmCardDeleteButton.textContent = 'Да';
+      });
   };
 });
-
-//Добавляем слушатель клика для смены изображения профиля
-editProfileImg.addEventListener('click', () => openPopup(popupEditProfileImg)); 
 
 //Добавляем обработчик для кнопки редактирования изображения профиля
 editProfileImgButton.addEventListener('click', (event) => {
@@ -224,6 +256,9 @@ editProfileImgButton.addEventListener('click', (event) => {
     .catch((err) => {
       console.log(err);
     })
+    .finally(() => {
+      editProfileImgButton.textContent = 'Сохранить';
+    });
 });
 
 //Запускаем валидацию.
